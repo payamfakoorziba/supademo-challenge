@@ -26,18 +26,7 @@ export async function GET(request: NextRequest) {
     const endIndex = startIndex + limit;
 
     // Get paginated videos
-    const paginatedVideos = filteredVideos.slice(startIndex, endIndex);
-
-    // Transform videos to match frontend requirements
-    const videos = paginatedVideos.map((item) => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      description: item.snippet.description,
-      thumbnails: item.snippet.thumbnails,
-      channelTitle: item.snippet.channelTitle,
-      publishedAt: item.snippet.publishedAt,
-      videoId: item.id.videoId,
-    }));
+    const videos = filteredVideos.slice(startIndex, endIndex);
 
     return NextResponse.json({
       videos,

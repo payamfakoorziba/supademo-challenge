@@ -8,6 +8,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Video, VideosResponse } from "@/lib/types";
 import { Pagination } from "./pagination";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const Sidebar = () => {
   const searchParams = useSearchParams();
@@ -93,7 +94,14 @@ const Sidebar = () => {
   return (
     <div className="bg-neutral-100 w-96 h-screen px-4 py-8 hidden md:flex flex-col">
       <Link href="/" className="mb-4 w-fit">
-        <Image src="/logo.svg" alt="Supademo Logo" width={120} height={40} />
+        <Image
+          src="/logo.svg"
+          alt="Supademo Logo"
+          width={40}
+          height={28}
+          className="w-auto h-7"
+          priority
+        />
       </Link>
 
       <Input
@@ -120,13 +128,20 @@ const Sidebar = () => {
           <div className="flex-1 overflow-y-auto flex flex-col gap-4 min-h-0 p-1 -m-1">
             {videos.map((video) => (
               <Link
-                key={video.title + video.id}
-                href={`/${video.id}?${searchParams.toString()}`}
-                className="bg-white p-4 rounded-lg cursor-pointer border border-transparent hover:border-neutral-400 transition-colors"
+                key={video.snippet.title + video.id.videoId}
+                href={`/${video.id.videoId}?${searchParams.toString()}`}
+                className={cn(
+                  "bg-white p-4 rounded-lg cursor-pointer border border-transparent hover:border-neutral-400 transition-colors",
+                  loading && "opacity-60",
+                  pathname.includes(video.id.videoId) &&
+                    "border-neutral-400 ring-3 ring-neutral-400/30"
+                )}
               >
-                <h3 className="font-semibold line-clamp-1">{video.title}</h3>
+                <h3 className="font-semibold line-clamp-1">
+                  {video.snippet.title}
+                </h3>
                 <p className="text-sm text-neutral-500 line-clamp-2 mt-2">
-                  {video.description}
+                  {video.snippet.description}
                 </p>
               </Link>
             ))}
@@ -144,15 +159,31 @@ const Sidebar = () => {
         </div>
       )}
 
+      {/* No results found */}
       {debouncedQuery && !loading && videos.length === 0 && (
         <div className="mt-4 text-neutral-500 text-center flex flex-col items-center justify-center flex-1">
           No results found
           <button
-            className="text-blue-500 hover:underline"
+            className="text-sm text-neutral-900 hover:underline"
             onClick={handleClearQuery}
           >
             Clear search
           </button>
+        </div>
+      )}
+
+      {/* Loading Skeletons */}
+      {loading && videos.length === 0 && (
+        <div className="mt-4 flex-1 flex flex-col gap-4 min-h-0 overflow-y-hidden">
+          <div className="w-3/4 h-5 shrink-0 bg-neutral-200/70 rounded-lg" />
+          <div className="flex flex-col flex-1 gap-4 min-h-0">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-neutral-200/70 rounded-lg h-[106px] shrink-0"
+              ></div>
+            ))}
+          </div>
         </div>
       )}
     </div>
