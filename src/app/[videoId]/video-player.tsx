@@ -2,13 +2,7 @@
 
 import { RangeSlider } from "@/components/range-slider";
 import { PauseIcon, PlayIcon } from "@heroicons/react/16/solid";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Video } from "@/lib/types";
 
 declare global {
@@ -19,21 +13,23 @@ declare global {
 }
 
 const VideoPlayer = ({ video }: { video: Video }) => {
-  const [player, setPlayer] = useState<any>(null);
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [value, setValue] = useState<[number, number]>([0, 100]);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  useLayoutEffect(() => {
-    setValue(
-      localStorage.getItem(video.id.videoId)
-        ? JSON.parse(localStorage.getItem(video.id.videoId) as string)
-        : [0, 100]
-    );
+  // Trim values
+  const [value, setValue] = useState<[number, number]>([0, 100]);
+
+  useEffect(() => {
+    const savedValue = localStorage.getItem(video.id.videoId);
+
+    if (savedValue) {
+      const parsedValue = JSON.parse(savedValue);
+      setValue(parsedValue);
+      setCurrentTime(parsedValue[0]);
+    }
   }, [video]);
 
   const initializePlayer = useCallback(() => {
@@ -57,7 +53,14 @@ const VideoPlayer = ({ video }: { video: Video }) => {
           onReady: (event: any) => {
             const videoDuration = event.target.getDuration();
             setDuration(videoDuration);
-            setIsPlayerReady(true);
+
+            // Seek to the start time from localStorage after player is ready
+            const savedValue = localStorage.getItem(video.id.videoId);
+            if (savedValue) {
+              const parsedValue = JSON.parse(savedValue);
+              const startTime = (parsedValue[0] / 100) * videoDuration;
+              setCurrentTime(startTime);
+            }
           },
           onStateChange: (event: any) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -72,7 +75,6 @@ const VideoPlayer = ({ video }: { video: Video }) => {
       });
 
       playerRef.current = ytPlayer;
-      setPlayer(ytPlayer);
     }
   }, [video.id.videoId]);
 
@@ -100,67 +102,73 @@ const VideoPlayer = ({ video }: { video: Video }) => {
   }, [initializePlayer]);
 
   // Update current time periodically
+  // (There's probably a better way to do this, but it works for now)
   useEffect(() => {
-    if (!player || !isPlaying) return;
+    if (!playerRef.current || !isPlaying) return;
 
     const interval = setInterval(() => {
-      if (player.getCurrentTime) {
-        const time = player.getCurrentTime();
+      if (playerRef.current?.getCurrentTime) {
+        const time = playerRef.current.getCurrentTime();
         setCurrentTime(time);
 
         // Check if we've reached the end of the trim range
         const endTime = (value[1] / 100) * duration;
         if (time >= endTime && duration > 0) {
           // Pause at end of trim range
-          player.pauseVideo();
+          playerRef.current.pauseVideo();
           setIsPlaying(false);
           // Go back to the beginning of the trim range
-          player.seekTo((value[0] / 100) * duration);
+          playerRef.current.seekTo((value[0] / 100) * duration);
           setCurrentTime((value[0] / 100) * duration);
         }
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [player, isPlaying, value, duration]);
+  }, [isPlaying, value, duration]);
 
   const toggleVideo = () => {
+    if (!playerRef.current) return;
+
     if (isPlaying) {
       setIsPlaying(false);
-      player?.pauseVideo();
+      playerRef.current?.pauseVideo();
     } else {
       setIsPlaying(true);
-      player?.playVideo();
+      playerRef.current?.playVideo();
     }
   };
 
   const handleRangeChange = (newValue: [number, number]) => {
+    if (!playerRef.current) return;
+
     setValue(newValue);
     localStorage.setItem(video.id.videoId, JSON.stringify(newValue));
 
     // Check if current time is outside the new range
-    if (player) {
-      const currentTime = player.getCurrentTime();
+    if (playerRef.current) {
+      const currentTime = playerRef.current.getCurrentTime();
       const startTime = (newValue[0] / 100) * duration;
       const endTime = (newValue[1] / 100) * duration;
 
       if (currentTime < startTime) {
         // Seek to the start of the new range
-        player.seekTo(startTime);
+        playerRef.current.seekTo(startTime);
         setCurrentTime(startTime);
       }
 
       if (currentTime > endTime) {
         // Seek to the end of the new range
-        player.seekTo(endTime);
+        playerRef.current.seekTo(endTime);
         setCurrentTime(endTime);
       }
     }
   };
 
   const handleCurrentTimeChange = (currentTime: number) => {
+    if (!playerRef.current) return;
     setCurrentTime(currentTime);
-    player?.seekTo(currentTime);
+    playerRef.current?.seekTo(currentTime);
   };
 
   return (
@@ -171,11 +179,10 @@ const VideoPlayer = ({ video }: { video: Video }) => {
 
       {/* Video Controls */}
       <div className="mt-6 space-y-4">
-        {/* Play/Pause and Loop Controls */}
-        <div className="flex items-center gap-4 p-4 bg-neutral-200/50 rounded-2xl backdrop-blur-sm">
+        <div className="flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-neutral-200/50 rounded-2xl backdrop-blur-sm">
           <button
             onClick={toggleVideo}
-            className="flex items-center justify-center w-10 h-10 rounded-full [&_svg]:text-neutral-700 [&_svg]:hover:text-neutral-900 [&_svg]:size-6 transition-all active:scale-90"
+            className="flex items-center justify-center w-10 h-10 rounded-full [&_svg]:text-neutral-700 [&_svg]:hover:text-neutral-900 [&_svg]:size-4 md:[&_svg]:size-6 transition-all active:scale-90"
           >
             {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </button>
