@@ -2,7 +2,13 @@
 
 import { RangeSlider } from "@/components/range-slider";
 import { PauseIcon, PlayIcon } from "@heroicons/react/16/solid";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Video } from "@/lib/types";
 
 declare global {
@@ -20,6 +26,14 @@ const VideoPlayer = ({ video }: { video: Video }) => {
   const [duration, setDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [value, setValue] = useState<[number, number]>([0, 100]);
+
+  useLayoutEffect(() => {
+    setValue(
+      localStorage.getItem(video.id.videoId)
+        ? JSON.parse(localStorage.getItem(video.id.videoId) as string)
+        : [0, 100]
+    );
+  }, [video]);
 
   const initializePlayer = useCallback(() => {
     if (videoRef.current && typeof window.YT !== "undefined") {
@@ -121,6 +135,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
 
   const handleRangeChange = (newValue: [number, number]) => {
     setValue(newValue);
+    localStorage.setItem(video.id.videoId, JSON.stringify(newValue));
 
     // Check if current time is outside the new range
     if (player) {

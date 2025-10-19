@@ -110,6 +110,7 @@ export function RangeSlider({
 
       if (activeThumb === "start") {
         updateValue([newValue, currentValue[1]]);
+        onCurrentTimeChange((newValue / 100) * duration);
       } else {
         updateValue([currentValue[0], newValue]);
       }

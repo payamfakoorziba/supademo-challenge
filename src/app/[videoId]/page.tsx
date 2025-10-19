@@ -19,6 +19,12 @@ const VideoPage = async ({
   return (
     <main className="p-6 flex flex-col items-center justify-center h-full">
       <div className="w-full max-w-4xl">
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold">{video.snippet.title}</h2>
+          <p className="text-sm text-neutral-500 mt-1">
+            {video.snippet.description}
+          </p>
+        </div>
         {/* YouTube Video Embed */}
         <VideoPlayer video={video} />
       </div>
