@@ -26,6 +26,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
   const [duration, setDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [value, setValue] = useState<[number, number]>([0, 100]);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   useLayoutEffect(() => {
     setValue(
@@ -56,7 +57,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
           onReady: (event: any) => {
             const videoDuration = event.target.getDuration();
             setDuration(videoDuration);
-            console.log("Video duration:", videoDuration);
+            setIsPlayerReady(true);
           },
           onStateChange: (event: any) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -164,14 +165,14 @@ const VideoPlayer = ({ video }: { video: Video }) => {
 
   return (
     <div>
-      <div className="w-full aspect-video rounded-lg overflow-hidden">
+      <div className="w-full aspect-video rounded-lg overflow-hidden bg-neutral-100">
         <div ref={videoRef} />
       </div>
 
       {/* Video Controls */}
       <div className="mt-6 space-y-4">
         {/* Play/Pause and Loop Controls */}
-        <div className="flex items-center gap-4 p-4 bg-neutral-100 rounded-2xl">
+        <div className="flex items-center gap-4 p-4 bg-neutral-200/50 rounded-2xl backdrop-blur-sm">
           <button
             onClick={toggleVideo}
             className="flex items-center justify-center w-10 h-10 rounded-full [&_svg]:text-neutral-700 [&_svg]:hover:text-neutral-900 [&_svg]:size-6 transition-all active:scale-90"

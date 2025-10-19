@@ -1,18 +1,23 @@
 "use client";
 
-import Image from "next/image";
-import { Input } from "./input";
+import { Input } from "./ui/input";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Video, VideosResponse } from "@/lib/types";
-import { Pagination } from "./pagination";
+import { Pagination } from "./ui/pagination";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const Sidebar = () => {
+const VideoSearch = ({
+  onVideoClick,
+}: {
+  onVideoClick?: (video: Video) => void;
+}) => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
+
   const [query, setQuery] = useState<string>(searchParams.get("query") || "");
   const debouncedQuery = useDebounce(query, 500, true);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -28,8 +33,6 @@ const Sidebar = () => {
     hasPrevPage: false,
     limit: 10,
   });
-
-  const router = useRouter();
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
@@ -92,18 +95,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="bg-neutral-100 w-96 h-screen px-4 py-8 hidden md:flex flex-col">
-      <Link href="/" className="mb-4 w-fit">
-        <Image
-          src="/logo.svg"
-          alt="Supademo Logo"
-          width={40}
-          height={28}
-          className="w-auto h-7"
-          priority
-        />
-      </Link>
-
+    <div className="flex flex-col flex-1 gap-4 min-h-0 h-full">
       <Input
         type="text"
         placeholder="Search"
@@ -113,7 +105,7 @@ const Sidebar = () => {
 
       {/* Results */}
       {videos.length > 0 && (
-        <div className="mt-4 flex flex-col flex-1 gap-4 min-h-0">
+        <div className="flex flex-col flex-1 gap-4 min-h-0">
           {/* Results info */}
           <div className="text-sm text-neutral-600">
             Showing {videos.length} of {pagination.totalVideos} videos
@@ -127,23 +119,12 @@ const Sidebar = () => {
 
           <div className="flex-1 overflow-y-auto flex flex-col gap-4 min-h-0 p-1 -m-1">
             {videos.map((video) => (
-              <Link
+              <VideoCard
                 key={video.snippet.title + video.id.videoId}
-                href={`/${video.id.videoId}?${searchParams.toString()}`}
-                className={cn(
-                  "bg-white p-4 rounded-lg cursor-pointer border border-transparent hover:border-neutral-400 transition-colors",
-                  loading && "opacity-60",
-                  pathname.includes(video.id.videoId) &&
-                    "border-neutral-400 ring-3 ring-neutral-400/30"
-                )}
-              >
-                <h3 className="font-semibold line-clamp-1">
-                  {video.snippet.title}
-                </h3>
-                <p className="text-sm text-neutral-500 line-clamp-2 mt-2">
-                  {video.snippet.description}
-                </p>
-              </Link>
+                video={video}
+                loading={loading}
+                onVideoClick={onVideoClick}
+              />
             ))}
           </div>
 
@@ -161,7 +142,7 @@ const Sidebar = () => {
 
       {/* No results found */}
       {debouncedQuery && !loading && videos.length === 0 && (
-        <div className="mt-4 text-neutral-500 text-center flex flex-col items-center justify-center flex-1">
+        <div className="text-neutral-500 text-center flex flex-col items-center justify-center flex-1">
           No results found
           <button
             className="text-sm text-neutral-900 hover:underline"
@@ -174,14 +155,14 @@ const Sidebar = () => {
 
       {/* Loading Skeletons */}
       {loading && videos.length === 0 && (
-        <div className="mt-4 flex-1 flex flex-col gap-4 min-h-0 overflow-y-hidden">
+        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-hidden">
           <div className="w-3/4 h-5 shrink-0 bg-neutral-200/70 rounded-lg" />
           <div className="flex flex-col flex-1 gap-4 min-h-0">
             {Array.from({ length: 10 }).map((_, index) => (
               <div
                 key={index}
                 className="bg-neutral-200/70 rounded-lg h-[106px] shrink-0"
-              ></div>
+              />
             ))}
           </div>
         </div>
@@ -189,4 +170,35 @@ const Sidebar = () => {
     </div>
   );
 };
-export default Sidebar;
+
+const VideoCard = ({
+  video,
+  loading,
+  onVideoClick,
+}: {
+  video: Video;
+  loading: boolean;
+  onVideoClick?: (video: Video) => void;
+}) => {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  return (
+    <Link
+      key={video.snippet.title + video.id.videoId}
+      href={`/${video.id.videoId}?${searchParams.toString()}`}
+      className={cn(
+        "bg-white p-4 rounded-lg cursor-pointer border border-transparent hover:border-neutral-400",
+        loading && "opacity-60",
+        pathname.includes(video.id.videoId) && "bg-neutral-900 text-white"
+      )}
+      onClick={() => onVideoClick?.(video)}
+    >
+      <h3 className="font-semibold line-clamp-1">{video.snippet.title}</h3>
+      <p className="text-sm text-neutral-500 line-clamp-2 mt-2">
+        {video.snippet.description}
+      </p>
+    </Link>
+  );
+};
+
+export default VideoSearch;

@@ -48,11 +48,12 @@ export const Pagination = ({
             <button
               key={pageNum}
               onClick={() => onPageChange(pageNum)}
-              className={`w-9 px-3 py-2 text-sm border rounded-md ${
+              className={cn(
+                "w-9 px-3 py-2 text-sm border rounded-md",
                 currentPage === pageNum
                   ? "bg-neutral-700 text-white border-neutral-700"
                   : "border-neutral-300 hover:bg-neutral-50"
-              }`}
+              )}
             >
               {pageNum}
             </button>
