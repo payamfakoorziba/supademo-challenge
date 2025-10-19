@@ -7,6 +7,7 @@ import { Video } from "@/lib/types";
 
 declare global {
   interface Window {
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     YT: any;
     onYouTubeIframeAPIReady: () => void;
   }
@@ -14,6 +15,7 @@ declare global {
 
 const VideoPlayer = ({ video }: { video: Video }) => {
   const videoRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState<number>(0);
@@ -50,7 +52,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
           rel: 0,
         },
         events: {
-          onReady: (event: any) => {
+          onReady: (event: { target: { getDuration: () => number } }) => {
             const videoDuration = event.target.getDuration();
             setDuration(videoDuration);
 
@@ -62,7 +64,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
               setCurrentTime(startTime);
             }
           },
-          onStateChange: (event: any) => {
+          onStateChange: (event: { data: number }) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true);
             } else if (event.data === window.YT.PlayerState.PAUSED) {

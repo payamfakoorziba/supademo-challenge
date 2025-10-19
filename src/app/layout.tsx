@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +31,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex h-dvh sm:h-screen relative bg-neutral-100">
-          <Sidebar />
-          <MobileMenu className="absolute top-4 left-4" />
+          {/* Wrapping in suspense cuz of this: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout */}
+          <Suspense>
+            <Sidebar />
+            <MobileMenu className="absolute top-4 left-4" />
+          </Suspense>
           <main className="flex-1 h-full md:p-3 md:pl-0">
             <div className="bg-white rounded-xl h-full">{children}</div>
           </main>
