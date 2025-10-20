@@ -32,7 +32,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
       setValue(parsedValue);
       setCurrentTime(parsedValue[0]);
     }
-  }, [video]);
+  }, [video, playerRef]);
 
   const initializePlayer = useCallback(() => {
     if (videoRef.current && typeof window.YT !== "undefined") {
@@ -52,7 +52,12 @@ const VideoPlayer = ({ video }: { video: Video }) => {
           rel: 0,
         },
         events: {
-          onReady: (event: { target: { getDuration: () => number } }) => {
+          onReady: (event: {
+            target: {
+              getDuration: () => number;
+              seekTo: (time: number) => void;
+            };
+          }) => {
             const videoDuration = event.target.getDuration();
             setDuration(videoDuration);
 
@@ -62,6 +67,7 @@ const VideoPlayer = ({ video }: { video: Video }) => {
               const parsedValue = JSON.parse(savedValue);
               const startTime = (parsedValue[0] / 100) * videoDuration;
               setCurrentTime(startTime);
+              event.target.seekTo(startTime);
             }
           },
           onStateChange: (event: { data: number }) => {
